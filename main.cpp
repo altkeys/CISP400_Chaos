@@ -20,6 +20,17 @@ int main() {
     srand(time(0));
     int loaded_points = 0;
 
+    Font font;
+    if (!font.loadFromFile("FiraSans-Regular.ttf")) {
+        cout << "Failed to load font." << endl;
+    }
+
+    Text text;
+    text.setFont(font);
+    text.setString("Left-click 3 times to plot your vertices, then a 4th time to plot the starting point.");
+    text.setCharacterSize(30);
+    text.setFillColor(Color::White);
+
     VideoMode screen(1920, 1080);
     RenderWindow window(screen, "Chaos Game !!!!", Style::Default);
     vector<CircleShape> vertices, points;
@@ -73,6 +84,13 @@ int main() {
         }
 
         window.clear();
+        if (points.size() == 0) {
+
+            FloatRect bounds = text.getLocalBounds();
+            text.setPosition((window.getSize().x - bounds.width) / 2 - bounds.left, text.getPosition().y);
+
+            window.draw(text);
+        }
         for (CircleShape& vertex : vertices) { window.draw(vertex); }
 
         for (CircleShape& point : points) {
@@ -93,7 +111,7 @@ Color generate_random_color() {
 }
 
 CircleShape create_point(Vector2f position, Color color) {
-    CircleShape point(3);
+    CircleShape point(2);
 
     point.setPosition(position);
     point.setFillColor(color);
