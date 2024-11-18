@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 
 using namespace sf;
 using namespace std;
@@ -26,6 +27,17 @@ CircleShape create_point(float x, float y, Color color = Color::White) {
     return point;
 }
 
+float calculate_scalar(int vertices) {
+    float scalar = 1.0;
+    int bound = floor(vertices / 4);
+
+    for (int k = 1; k < bound + 1; k++) {
+        scalar += cos((2 * M_PI * k) / vertices);
+    }
+
+    return 1.0 / (2.0 * scalar);
+}
+
 void update_frame(vector<CircleShape>& points, const vector<CircleShape>& vertices) {
     Color color = generate_random_color();
 
@@ -35,9 +47,11 @@ void update_frame(vector<CircleShape>& points, const vector<CircleShape>& vertic
         CircleShape vertex = vertices.at(index),
                     point  = points.back();
 
-        float x_pos = ((point.getPosition().x + vertex.getPosition().x) / 2.0),
-              y_pos = ((point.getPosition().y + vertex.getPosition().y) / 2.0);
-
+        float scalar = calculate_scalar(vertices.size()),
+              x_pos = vertex.getPosition().x + ((point.getPosition().x - vertex.getPosition().x) * scalar),
+              y_pos = vertex.getPosition().y + ((point.getPosition().y - vertex.getPosition().y) * scalar);
+              //x_pos = scalar * ((point.getPosition().x + vertex.getPosition().x)),
+              //y_pos = scalar * ((point.getPosition().y + vertex.getPosition().y));
         points.push_back(create_point(x_pos, y_pos, color));
     }
 }
@@ -70,7 +84,7 @@ int main() {
                     
                     cout << "(" << x << ", " << y << ")" << endl;
 
-                    if (vertices.size() < 3) { vertices.push_back(create_point(x, y)); }
+                    if (vertices.size() < 6) { vertices.push_back(create_point(x, y)); }
                     else if (points.size() == 0) { points.push_back(create_point(x, y)); }
                 }
             }
