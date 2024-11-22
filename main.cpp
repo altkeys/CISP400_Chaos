@@ -1,8 +1,10 @@
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <cmath>
 
 using namespace sf;
 using namespace std;
@@ -26,17 +28,35 @@ CircleShape create_point(float x, float y, Color color = Color::White) {
     return point;
 }
 
+float calculate_scalar(int vertices) {
+    float scalar = 1.0;
+    int bound = floor(vertices / 4);
+
+    for (int k = 1; k < bound + 1; k++) {
+        scalar += cos((2 * M_PI * k) / vertices);
+    }
+
+    return 1.0 / (2.0 * scalar);
+}
+
 void update_frame(vector<CircleShape>& points, const vector<CircleShape>& vertices) {
     Color color = generate_random_color();
+    int previous = -1;
 
     for (int i = 0; i < POINTS_PER_FRAME; i++) {
         int index = rand() % vertices.size();
 
-        CircleShape vertex = vertices.at(index),
-                    point  = points.back();
+        if (vertices.size() == 4) {
+            while (index == previous) { index = rand() % vertices.size(); }
+            previous = index;
+        }
 
-        float x_pos = ((point.getPosition().x + vertex.getPosition().x) / 2.0),
-              y_pos = ((point.getPosition().y + vertex.getPosition().y) / 2.0);
+        Vector2f vertex = vertices.at(index).getPosition(),
+                    point  = points.back().getPosition();
+
+        float scalar = calculate_scalar(vertices.size()),
+              x_pos = vertex.x + ((point.x - vertex.x) * scalar),
+              y_pos = vertex.y + ((point.y - vertex.y) * scalar);
 
         points.push_back(create_point(x_pos, y_pos, color));
     }
@@ -52,6 +72,11 @@ int main() {
 
     Text text("Left-click to select 3 vertices then select a starting point.", font, 30);
     text.setFillColor(Color::White);
+
+    Music music;
+    if (!music.openFromFile("01 Title Theme.mp3")) {
+        cout << "Failed to load easter egg music." << endl;
+    }
 
     VideoMode screen(1920, 1080);
     RenderWindow window(screen, "Chaos Game !!!!!", Style::Default);
@@ -70,12 +95,15 @@ int main() {
                     
                     cout << "(" << x << ", " << y << ")" << endl;
 
-                    if (vertices.size() < 3) { vertices.push_back(create_point(x, y)); }
-                    else if (points.size() == 0) { points.push_back(create_point(x, y)); }
+                    if (vertices.size() < 6) { vertices.push_back(create_point(x, y)); }
+                    else if (points.size() == 0) { 
+                        if (vertices.size() == 3) { music.play(); }
+                        points.push_back(create_point(x, y));
+                    }
                 }
             }
         }
-
+        
         if (Keyboard::isKeyPressed(Keyboard::Escape)) { window.close(); }
 
         window.clear();
@@ -89,7 +117,6 @@ int main() {
         for (CircleShape& vertex : vertices) { window.draw(vertex); }
         for (CircleShape& point : points) { window.draw(point); }
         window.display();
-
     }
     return 0;
 }
